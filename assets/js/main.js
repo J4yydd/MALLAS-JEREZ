@@ -1015,10 +1015,93 @@ const Utils = {
     }
 };
 
+// Scroll Reveal Manager
+const ScrollRevealManager = {
+    elements: [],
+    observer: null,
+    
+    init() {
+        // Verificar si el usuario prefiere movimiento reducido
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            return; // No aplicar animaciones si el usuario prefiere movimiento reducido
+        }
+        
+        // Seleccionar todos los elementos con clases de animación
+        this.elements = Array.from(document.querySelectorAll('.fade-in-up, .fade-in, .scale-in, .advantage-card, .gallery-item'));
+        
+        if (this.elements.length === 0) return;
+        
+        // Crear Intersection Observer
+        const options = {
+            root: null,
+            rootMargin: '0px 0px -50px 0px',
+            threshold: 0.1
+        };
+        
+        this.observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('revealed');
+                    // Una vez revelado, dejar de observar para mejor rendimiento
+                    this.observer.unobserve(entry.target);
+                }
+            });
+        }, options);
+        
+        // Observar cada elemento
+        this.elements.forEach(element => {
+            this.observer.observe(element);
+        });
+    }
+};
+
+// Scroll To Top Manager
+const ScrollToTopManager = {
+    button: null,
+    scrollThreshold: 300,
+    
+    init() {
+        this.button = document.getElementById('scrollToTop');
+        if (!this.button) return;
+        
+        // Agregar event listener al botón
+        this.button.addEventListener('click', () => {
+            this.scrollToTop();
+        });
+        
+        // Mostrar/ocultar botón basado en scroll
+        window.addEventListener('scroll', Utils.throttle(() => {
+            this.handleScroll();
+        }, 100));
+        
+        // Verificar posición inicial
+        this.handleScroll();
+    },
+    
+    handleScroll() {
+        if (!this.button) return;
+        
+        if (window.pageYOffset > this.scrollThreshold) {
+            this.button.classList.add('visible');
+        } else {
+            this.button.classList.remove('visible');
+        }
+    },
+    
+    scrollToTop() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
+};
+
 // Inicialización principal
 document.addEventListener('DOMContentLoaded', function() {
     ThemeManager.init();
     ScrollManager.init();
+    ScrollRevealManager.init();
+    ScrollToTopManager.init();
     TabsManager.init();
     CarouselManager.init();
     MapManager.init();
@@ -1176,6 +1259,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // Exportar funciones para testing
 window.MallasJerez = {
     ScrollManager,
+    ScrollRevealManager,
+    ScrollToTopManager,
     TabsManager,
     CarouselManager,
     MapManager,
